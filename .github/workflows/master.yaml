@@ -18,10 +18,11 @@ jobs:
 
       - name: Get merged pull request labels
         id: pr_labels
-        uses: softprops/action-labels@v2
-        with:
-          number: ${{ env.PR_NUMBER }}
-          repo-token: ${{ secrets.VACASA_NZ_GITHUB_TOKEN }}
+        run: |
+          labels=$(curl -s -H "Authorization: token ${{ secrets.VACASA_NZ_GITHUB_TOKEN }}" \
+             "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ env.PR_NUMBER }}" | \
+             jq -r '.labels[].name')
+          echo "::set-output name=labels::$labels"
 
       - name: Get PR author
         id: get_author
