@@ -1,0 +1,65 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get merged pull request number
+        id: get_pr_num
+        run: |
+          echo "PR_NUMBER=$(jq --raw-output .pull_request.number $GITHUB_EVENT_PATH)" >> $GITHUB_ENV
+
+      - name: Get merged pull request labels
+        id: pr_labels
+        uses: softprops/action-labels@v2
+        with:
+          number: ${{ env.PR_NUMBER }}
+          repo-token: ${{ secrets.VACASA_NZ_GITHUB_TOKEN }}
+
+      - name: Get PR author
+        id: get_author
+        run: echo "::set-output name=author::$(jq --raw-output .pull_request.user.login $GITHUB_EVENT_PATH)"
+
+      - name: Determine release type
+        id: release_type
+        run: |
+          labels="$(echo "${{ steps.pr_labels.outputs.labels }}" | tr '\n' ' ')"
+          if echo "$labels" | grep -q 'version/major'; then
+            echo "::set-output name=type::major"
+          elif echo "$labels" | grep -q 'version/minor'; then
+            echo "::set-output name=type::minor"
+          elif echo "$labels" | grep -q 'version/patch'; then
+            echo "::set-output name=type::patch"
+          else
+            echo "::set-output name=type::none"
+          fi
+
+      - name: Get pull request title
+        id: pr_title
+        run: |
+          title=$(jq --raw-output .pull_request.title $GITHUB_EVENT_PATH)
+          echo "::set-output name=title::$title"
+
+      - name: Get latest release version
+        id: latest_release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo-token: ${{ secrets.VACASA_NZ_GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Publish release
+        uses: ncipollo/release-action@v2
+        with:
+          name: ${{ steps.latest_release.outputs.version }}
+          tag: ${{ steps.latest_release.outputs.version }}
+          prerelease: false
+          draft: false
+          body: "${{ steps.pr_title.outputs.title }} (by ${{ steps.pr_author.outputs.author }})"
+          token: ${{ secrets.VACASA_NZ_GITHUB_TOKEN }}
