@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 0
 
       - name: Publish release
-        uses: ncipollo/release-action@v2
+        uses: ncipollo/release-action@v1
         with:
           name: ${{ steps.latest_release.outputs.version }}
           tag: ${{ steps.latest_release.outputs.version }}
