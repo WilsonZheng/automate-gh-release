@@ -30,6 +30,7 @@ jobs:
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
           draft: false
+          prerelease: false
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          title: "${{ steps.tag.outputs.tag }} by:${{ github.actor }}"
+          title: "${{ steps.tag.outputs.tag }}"
           automatic_release_tag: ${{ steps.tag.outputs.new_tag }}
